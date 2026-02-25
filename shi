@@ -1,14 +1,7 @@
 local Players = game:GetService("Players")
-local VIM = game:GetService("VirtualInputManager")
 local playerGui = Players.LocalPlayer.PlayerGui
 
 print("[Fish] Script started")
-
-local function click()
-    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-    task.wait(0.01)
-    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-end
 
 local function runMinigame(child)
     print("[Fish] Minigame found: " .. child.Name)
@@ -16,11 +9,10 @@ local function runMinigame(child)
     local ok1, fishIcon = pcall(function() return child.Frame.FishBar.FishIcon end)
     local ok2, reelBar  = pcall(function() return child.Frame.FishBar.ReelBar end)
 
-    if not ok1 then print("[Fish] ERROR: FishIcon not found - " .. tostring(fishIcon)) return end
-    if not ok2 then print("[Fish] ERROR: ReelBar not found - " .. tostring(reelBar)) return end
+    if not ok1 then print("[Fish] ERROR: FishIcon not found") return end
+    if not ok2 then print("[Fish] ERROR: ReelBar not found") return end
 
-    print("[Fish] FishIcon: " .. fishIcon:GetFullName())
-    print("[Fish] ReelBar:  " .. reelBar:GetFullName())
+    print("[Fish] Got FishIcon and ReelBar, starting loop")
 
     local ticks = 0
     while child.Parent do
@@ -41,15 +33,18 @@ local function runMinigame(child)
         end
 
         if not overlapping then
-            click()
-            print("[Fish] CLICKING")
+            print("[Fish] NOT overlapping - pressing M1")
+            mouse1press()
+        else
+            print("[Fish] overlapping - releasing M1")
+            mouse1release()
         end
 
         task.wait(0.05)
     end
 
-    print("[Fish] Minigame ended")
-    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+    mouse1release()
+    print("[Fish] Minigame ended, M1 released")
 end
 
 playerGui.ChildAdded:Connect(function(child)
@@ -60,7 +55,6 @@ playerGui.ChildAdded:Connect(function(child)
 end)
 
 if playerGui:FindFirstChild("FishingMinigame") then
-    print("[Fish] FishingMinigame already exists, running now")
     task.spawn(runMinigame, playerGui.FishingMinigame)
 end
 
