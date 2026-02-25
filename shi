@@ -1,0 +1,64 @@
+local Players = game:GetService("Players")
+local VIM = game:GetService("VirtualInputManager")
+local playerGui = Players.LocalPlayer.PlayerGui
+
+print("[Fish] Script started")
+
+local function runMinigame(child)
+    print("[Fish] Minigame found: " .. child.Name)
+
+    local ok1, fishIcon = pcall(function() return child.Frame.FishBar.FishIcon end)
+    local ok2, reelBar  = pcall(function() return child.Frame.FishBar.ReelBar end)
+
+    if not ok1 then print("[Fish] ERROR: FishIcon not found - " .. tostring(fishIcon)) return end
+    if not ok2 then print("[Fish] ERROR: ReelBar not found - " .. tostring(reelBar)) return end
+
+    print("[Fish] FishIcon: " .. fishIcon:GetFullName())
+    print("[Fish] ReelBar:  " .. reelBar:GetFullName())
+
+    local ticks = 0
+    while child.Parent do
+        ticks += 1
+
+        -- Use absolute pixel positions — works regardless of Scale vs Offset
+        local fishTop    = fishIcon.AbsolutePosition.Y
+        local fishBot    = fishTop + fishIcon.AbsoluteSize.Y
+
+        local reelTop    = reelBar.AbsolutePosition.Y
+        local reelBot    = reelTop + reelBar.AbsoluteSize.Y
+
+        local overlapping = fishBot >= reelTop and fishTop <= reelBot
+
+        if ticks % 5 == 0 then
+            print(string.format(
+                "[Fish] fishTop=%.1f fishBot=%.1f | reelTop=%.1f reelBot=%.1f | overlap=%s",
+                fishTop, fishBot, reelTop, reelBot, tostring(overlapping)
+            ))
+        end
+
+        if overlapping then
+            VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+        else
+            VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        end
+
+        task.wait(0.05)
+    end
+
+    print("[Fish] Minigame ended, releasing M1")
+    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+end
+
+playerGui.ChildAdded:Connect(function(child)
+    if child.Name == "FishingMinigame" then
+        print("[Fish] FishingMinigame detected!")
+        task.spawn(runMinigame, child)
+    end
+end)
+
+if playerGui:FindFirstChild("FishingMinigame") then
+    print("[Fish] FishingMinigame already exists, running now")
+    task.spawn(runMinigame, playerGui.FishingMinigame)
+end
+
+print("[Fish] Waiting for minigame...")
